@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Document</title>
+</head>
+<body>
+<canvas id="can" style="border:1px solid skyblue">
+
+</canvas>
+</body>
+</html>
+<script type="text/javascript">
+var can=document.querySelector('#can');
+var cvs=can.getContext("2d");
+    function loadimg(imgurl,fn){
+        var imgobj={};
+        // 加载完毕的数量
+        var loaded=0;
+        // 要加载的图片数量
+        var imglength=0;
+        for (var key in imgurl){
+             imglength++;
+           var tempImg=new Image();
+           tempImg.onload=function(){
+               loaded++;
+             if (loaded>=imglength){
+                 fn(imgobj);
+             }
+           };
+           tempImg.src=imgurl[key];
+           imgobj[key]=tempImg;
+        }
+    };
+// 背景移动
+  function Sky(img,speed){
+    this.img=img;
+    this.speed=speed||2;
+    this.width=can.width;
+    this.height=can.height;
+    Sky.len++;
+    this.y=0;
+    this.x=this.width*(Sky.len-1);
+
+  }
+   Sky.len=0;
+  Sky.prototype={
+    constructor:Sky,
+    draw:function(){
+        cvs.drawImage(this.img,this.x,this.y);
+    },
+    update:function(){
+        this.x-=this.speed;
+        if (this.x<=-this.width){
+            this.x+=this.width*Sky.length;
+        }
+    }
+  };
+// 小鸟
+ function Bird(img,widthlen,heightlen,x,y){
+    this.img=img;
+    this.widthlen=widthlen;
+    this.heightlen=heightlen;
+    this.x=x;
+    this.y=y;
+    this.width=this.img.width/this.widthlen;
+    this.height=this.img.height/this.heightlen;
+    this.i=0;
+    this.speed=2;
+    this.speedPlus=0.5;
+    this._bind();
+ }
+ Bird.prototype={
+    constructor:Bird,
+    draw:function(){
+     var baseRadian=Math.PI/180*10;
+     var maxRadian=Math.PI/180*45;
+     var rotateRadian=baseRadian*this.speed;
+     rotateRadian=rotateRadian>maxRadian?maxRadian:rotateRadian;
+     cvs.save();
+     cvs.translate(this.x+this.width/2, this.y+this.height/2);
+     cvs.rotate(rotateRadian);
+        cvs.drawImage(this.img,
+        this.width*this.i,0,this.width,this.height,
+        -this.width/2,-this.height/2,this.width,this.height
+         );
+     cvs.restore();
+    },
+    update:function(){
+       this.i=++this.i>=this.widthlen?0:this.i;
+       this.y+=this.speed;
+       this.speed+=this.speedPlus;
+    },
+    _bind:function(){
+        var that=this;
+       can.onclick=function(){
+        that.speed=-6;
+       }
+     }
+
+ };
+// 大地
+function Land(img,speed){
+    this.img=img;
+    this.speed=speed||2;
+    Land.len++;
+    this.y=can.height-this.img.height;
+    this.x=this.img.width*(Land.len-1);
+
+  }
+  Land.len=0;
+  Land.prototype={
+    constructor:Land,
+    draw:function(){
+        cvs.drawImage(this.img,this.x,this.y);
+    },
+    update:function(){
+        this.x-=this.speed;
+        this.x+=this.x<=-this.img.width?this.img.width*Land.len:0;
+    }
+  };
+// 管道
+function Pipe(imgup,imgdown,landheight,space,speed){
+    this.imgup=imgup;
+    this.imgdown=imgdown;
+    this.space=space;
+    this.speed=speed;
+    this.landheight=landheight;
+    Pipe.len++;
+    this.width=this.imgdown.width;
+    this.height=this.imgdown.height;
+    this.x=300+this.width*5*(Pipe.len-1);
+    this.y=0;
+    this._init();
+};
+Pipe.len=0;
+Pipe.prototype={
+   _init:function(){
+       var maxheight=can.height-this.landheight-this.space-50;
+       var randomheight=Math.random()*maxheight;
+       randomheight=randomheight<50?50:randomheight;
+       this.downY=randomheight-this.height;
+       this.upY=randomheight+this.space;
+   },
+   draw:function(){
+      cvs.drawImage(this.imgdown,this.x,this.downY);
+      cvs.drawImage(this.imgup,this.x,this.upY);
+      this._drawPath();
+   },
+   _drawPath:function(){
+      cvs.rect(this.x, this.downY, this.width, this.height);
+      cvs.rect(this.x, this.upY, this.width, this.height);
+   },
+   update:function(){
+     this.x-=this.speed;
+    if (this.x<=-this.width){
+         Pipe.cande-=0.1;
+         this._init();
+         this.x+=this.width*5*Pipe.len;
+    }
+   }
+}
+</script>
+<script type="text/javascript">
+ loadimg({
+    bird:'./bird.png',
+    land:'./land.png',
+    pipedown:'./pipeDown.png',
+    pipeup:'./pipeUp.png',
+    sky:'./sky.png',
+ },function(imgobj){
+    can.width=imgobj.sky.width;
+    can.height=imgobj.sky.height;
+    var sky=new Sky(imgobj.sky,10);
+    var sky2=new Sky(imgobj.sky,10);
+    var bird=new Bird(imgobj.bird,3,1,10,50);
+    var land=new Land(imgobj.land,10);
+    var land1=new Land(imgobj.land,10);
+    var land2=new Land(imgobj.land,10);
+    var land3=new Land(imgobj.land,10);
+    var pipe=new Pipe(imgobj.pipeup,imgobj.pipedown,imgobj.land.height,150,10);
+    var pipe1=new Pipe(imgobj.pipeup,imgobj.pipedown,imgobj.land.height,150,10);
+    var pipe2=new Pipe(imgobj.pipeup,imgobj.pipedown,imgobj.land.height,150,10);
+    var pipe3=new Pipe(imgobj.pipeup,imgobj.pipedown,imgobj.land.height,150,10);
+    var pipe4=new Pipe(imgobj.pipeup,imgobj.pipedown,imgobj.land.height,150,10);
+    var pipe5=new Pipe(imgobj.pipeup,imgobj.pipedown,imgobj.land.height,150,10);
+    var timer=setInterval(function(){
+    var birdcodeX=bird.x+bird.width/2;
+    var birdcodeY=bird.y+bird.height/2;
+    if (cvs.isPointInPath(birdcodeX, birdcodeY)||birdcodeY<0||birdcodeY>(can.height-imgobj.land.height)){
+        clearInterval(timer);
+        cvs.fillStyle='rgba(100,100,100,0.8)';
+        cvs.fillRect(0,0,can.width,can.height);
+        cvs.textAlign='center';
+        cvs.textBaseLine='middle';
+        cvs.fillStyle='red';
+        cvs.font='900 40px 微软雅黑';
+        cvs.fillText('GAME OVER!!!', can.width/2,can.height/2);
+        return;
+    }
+    //背景
+     sky.draw();
+     sky.update();
+     sky2.draw();
+     sky2.update();
+     // 管道
+     cvs.beginPath();
+     pipe.draw();
+     pipe.update();
+     pipe1.draw();
+     pipe1.update();
+     pipe2.draw();
+     pipe2.update();
+     pipe3.draw();
+     pipe3.update();
+     pipe4.draw();
+     pipe4.update();
+     pipe5.draw();
+     pipe5.update();
+   // 大地
+    land.draw();
+    land.update();
+    land1.draw();
+    land1.update();
+    land2.draw();
+    land2.update();
+    land3.draw();
+    land3.update();
+   // 小鸟
+     bird.draw();
+     bird.update();
+    },60)
+ })
+</script>
